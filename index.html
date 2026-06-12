@@ -788,7 +788,7 @@ function teamListFull(){
   const combined=new Set([...TEAMS_2026_SORTED,...fromMatches]);
   return[...combined].sort((a,b)=>a.localeCompare(b));
 }
-const fmtKick=k=>{if(!k)return"";const d=new Date(k);if(isNaN(d))return String(k).replace("T"," ");const p=new Intl.DateTimeFormat('es-MX',{timeZone:'America/Chihuahua',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d);const o={};p.forEach(x=>o[x.type]=x.value);return o.day+" de "+o.month+" "+o.year+" "+o.hour+":"+o.minute;};const d=(p[0]||"").split("-");const t=(p[1]||"").slice(0,5);const mes=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][parseInt(d[1],10)-1]||"";const dia=d[2]?String(parseInt(d[2],10)):"";return (dia&&mes?dia+" "+mes:"")+(t?(dia?" · ":"")+t:"");}
+function fmtKick(k){if(!k)return"";const p=String(k).split("T");const d=(p[0]||"").split("-");const t=(p[1]||"").slice(0,5);const mes=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][parseInt(d[1],10)-1]||"";const dia=d[2]?String(parseInt(d[2],10)):"";return (dia&&mes?dia+" "+mes:"")+(t?(dia?" · ":"")+t:"");}
 
 function winner(r){if(!r)return null;if(r.home>r.away)return"H";if(r.away>r.home)return"A";return"D";}
 function computePoints(pred,result,phase){
@@ -1114,7 +1114,7 @@ function renderLive(){
  const sm=socialMoments();
  const stories=sm.length?`<div class="stories">${sm.map(x=>`<div class="story"><div class="em">${x.em}</div><div class="h">${x.h}</div><div class="s">${x.s}</div></div>`).join("")}</div>`:`<div class="livehint">Los momentos destacados aparecerán cuando haya resultados.</div>`;
  const up=matchesSorted().filter(m=>!m.result).slice(0,6);
- const upHTML=up.length?up.map(m=>`<div class="rowcard"><div class="grow"><strong>${esc(m.home)} vs ${esc(m.away)}</strong><div class="tiny">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(fmtKick(m.kickoff)):''}</div></div><span class="badge accent">próximo</span></div>`).join(""):`<div class="livehint">No hay partidos pendientes.</div>`;
+ const upHTML=up.length?up.map(m=>`<div class="rowcard"><div class="grow"><strong>${esc(m.home)} vs ${esc(m.away)}</strong><div class="tiny">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(m.kickoff.replace("T"," ")):''}</div></div><span class="badge accent">próximo</span></div>`).join(""):`<div class="livehint">No hay partidos pendientes.</div>`;
  const labels=jornadasWithResults();
  const top5=rows.slice(0,5);const maxTop=Math.max(1,top5[0]?top5[0].points:1);
  const top5HTML=top5.length?top5.map(r=>{const st=statsOf(r.id);const pctBar=Math.round(r.points/maxTop*100);
@@ -1171,7 +1171,7 @@ function matchHeroHTML(){
   }
   const next=matchesSorted().filter(m=>!m.result&&!m.locked)[0];
   if(next){
-    const k=next.kickoff?fmtKick(next.kickoff):"";
+    const k=next.kickoff?next.kickoff.replace("T"," "):"";
     return `<div class="card" style="background:linear-gradient(135deg,#0D2433,#11313f);border:1px solid #1e3a47;text-align:center;padding:18px">
       <div class="tiny" style="color:#00DA9B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Próximo partido · ${esc(phaseName(next.phase))}</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
@@ -1223,7 +1223,7 @@ function renderHome(){
    <div class="card"><h3 style="margin-top:0">🔥 Rachas</h3>${streaks.length?streaks.map(s=>`<div class="row" style="margin-bottom:6px">${avatarHTML(s.p,"sm")}<span class="grow tiny">${esc(s.p.name)}</span><b>${s.cur}🔥</b></div>`).join(""):'<p class="tiny">—</p>'}</div>
   </div>
   <h3>Próximos partidos</h3>
-  ${upcoming.length?upcoming.map(m=>`<div class="rowcard"><div class="grow"><strong>${esc(m.home)} vs ${esc(m.away)}</strong><div class="tiny">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(fmtKick(m.kickoff)):''}</div></div><span class="badge accent">abierto</span></div>`).join(""):`<div class="empty tiny">No hay partidos próximos.</div>`}
+  ${upcoming.length?upcoming.map(m=>`<div class="rowcard"><div class="grow"><strong>${esc(m.home)} vs ${esc(m.away)}</strong><div class="tiny">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(m.kickoff.replace("T"," ")):''}</div></div><span class="badge accent">abierto</span></div>`).join(""):`<div class="empty tiny">No hay partidos próximos.</div>`}
   <h3>Actividad reciente</h3>
   ${activity.length?activity.map(a=>`<div class="rowcard"><span style="font-size:1.2rem">${a.ic}</span><span class="grow tiny">${a.text}</span></div>`).join(""):`<div class="empty tiny">Sin actividad aún.</div>`}
  `;
@@ -1316,7 +1316,7 @@ function renderResults(){
      <div class="rteam">${teamCrest(m.home)}<span class="nm">${esc(m.home)}</span></div>
      <div class="rscore"><span class="${wH?'w':''}">${m.result.home}</span> <span style="color:var(--muted)">–</span> <span class="${wA?'w':''}">${m.result.away}</span></div>
      <div class="rteam">${teamCrest(m.away)}<span class="nm">${esc(m.away)}</span></div></div>
-     ${m.kickoff?`<div class="tiny center" style="margin-top:-4px">${esc(fmtKick(m.kickoff))}</div>`:''}`;
+     ${m.kickoff?`<div class="tiny center" style="margin-top:-4px">${esc(m.kickoff.replace("T"," "))}</div>`:''}`;
   const data=state.participants.map(p=>{const pr=predOf(p.id,m.id);const c=pr?computePoints(pr,m.result,m.phase):null;return{p,pr,c};}).filter(d=>d.pr);
   const exact=data.filter(d=>d.c.exact),win=data.filter(d=>d.c.correct&&!d.c.exact),fail=data.filter(d=>!d.c.correct&&!d.c.exact);
   const noPred=Math.max(0,state.participants.length-data.length);
@@ -1625,7 +1625,7 @@ function renderMatches(){
    const pend=cs.pending.length?`<span> · faltan <b>${cs.pending.length}</b>${cs.pending.length<=3?': '+cs.pending.slice(0,3).map(esc).join(", "):''} <button class="btn xs ghost" data-pending="${m.id}">ver</button></span>`:' · <span style="color:var(--accent)">✓ todos</span>';
    return `<div class="matchcard"><div class="between"><strong>${esc(m.home)} vs ${esc(m.away)}</strong>
     <span class="badge ${m.revealed?'gold':m.result?'lock':'accent'}">${m.revealed?'🔓 Revelado':m.result?'✅ Por revelar':m.locked?'🔒 Cerrado':'Abierto'}</span></div>
-   <div class="tiny" style="margin:4px 0">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(fmtKick(m.kickoff)):''}</div>
+   <div class="tiny" style="margin:4px 0">${esc(phaseName(m.phase))} · J${esc(m.matchday)}${m.kickoff?' · '+esc(m.kickoff.replace("T"," ")):''}</div>
    <div class="tiny" style="margin:2px 0 6px">👥 Capturaron <b>${cs.done}/${cs.total}</b> (${pct}%)${pend}
     <div class="bar" style="margin-top:3px"><span style="width:${pct}%"></span></div></div>
    <div class="row wrap" style="margin-top:6px"><label class="tiny" style="margin:0">Resultado</label>
